@@ -150,7 +150,7 @@ export default function App() {
 
       <footer className="footer-note">HECHO A MANO, HECHO PARA CELEBRAR <span>✳</span></footer>
 
-      <BanderinConfigurator
+      {configuratorOpen && <BanderinConfigurator
         open={configuratorOpen}
         position={(editingIndex ?? 0) + 1}
         editing={editing}
@@ -167,7 +167,7 @@ export default function App() {
         onSave={handleSaveItem}
         onDelete={handleDeleteItem}
         onClose={closeConfigurator}
-      />
+      />}
 
       <Dialog open={orderDialogOpen} onOpenChange={(_, data) => { setOrderDialogOpen(data.open); setOrderError('') }}>
         <DialogSurface>
