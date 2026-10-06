@@ -156,7 +156,7 @@ describe('shared garland link', () => {
   test('adds the review link to the WhatsApp message', () => {
     const link = buildGarlandShareUrl('https://petu.test', slots)
     const message = buildWhatsAppMessage('A-42', slots, link)
-    expect(message).toContain(`Ver configuración:\n${link}`)
+    expect(message).toContain(`Hola, compré esta guirnalda\n${link}`)
     expect(link.startsWith('https://petu.test/?g=')).toBe(true)
   })
 })
@@ -174,9 +174,7 @@ describe('WhatsApp message', () => {
       { ...base, id: '1', customization: { name: 'Dálmata' } },
       { ...base, id: '2', customization: { name: 'Labrador' } },
     ])
-    expect(message).toContain('Otro (silueta solicitada: "Dálmata") · Semicírculo · Rosa ×1')
-    expect(message).toContain('Otro (silueta solicitada: "Labrador") · Semicírculo · Rosa ×1')
-    expect(message).toContain('imágenes de referencia')
+    expect(message).toBe('Pedido: #A-1\nHola, compré esta guirnalda\n\npara el banderín #1 quiero silueta: Dálmata\npara el banderín #2 quiero silueta: Labrador')
     expect(getBanderinSvg('rectangle', 'otro')).toBe(getBanderinSvg('rectangle', 'nombre'))
     expect(validateGarlandItem({ shape: 'semi-circle', designId: 'otro', colorId: 'rosa' })).toBe('Escribe la raza o tipo de perro.')
   })
@@ -190,9 +188,7 @@ describe('WhatsApp message', () => {
       customization: { name: 'LUNA' },
     }
     const message = buildWhatsAppMessage('A-42', [repeatedItem, { ...repeatedItem, id: 'line-2' }, { ...repeatedItem, id: 'line-3' }])
-    expect(message).toContain('Número de pedido: A-42')
-    expect(message).toContain('Nombre "LUNA" · Semicírculo · Rosa ×3')
-    expect(message).toContain('Total: 3 banderines')
+    expect(message).toContain('Pedido: #A-42')
     expect(getWhatsAppUrl(message)).toContain(encodeURIComponent(message))
   })
 })
