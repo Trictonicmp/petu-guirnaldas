@@ -4,3 +4,6 @@ dist/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.tsnode_modules
+
+.env
+.env.local
