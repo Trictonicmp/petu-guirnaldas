@@ -20,7 +20,7 @@ import { areGarlandSlotsComplete, getConfiguredCount } from '../domain/garland/r
 import { buildGarlandShareUrl, serializeGarland } from '../domain/garland/share'
 import { MAX_BANDERINES, type GarlandItem, type GarlandShape } from '../domain/garland/types'
 import { useGarlandStore } from '../store/garlandStore'
-import { buildSilhouetteRequestMessage, buildWhatsAppMessage, getWhatsAppUrl } from '../services/whatsapp'
+import { buildWhatsAppMessage, getWhatsAppUrl } from '../services/whatsapp'
 import GarlandCarousel from '../components/garland/GarlandCarousel'
 import GarlandOverview from '../components/garland/GarlandOverview'
 import BanderinConfigurator from '../components/configurator/BanderinConfigurator'
@@ -114,10 +114,6 @@ export default function App() {
     setOrderError('')
   }
 
-  const handleSilhouetteRequest = (dogName: string) => {
-    const message = buildSilhouetteRequestMessage(dogName)
-    window.open(getWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
-  }
 
   return (
     <main className="app-shell">
@@ -159,7 +155,6 @@ export default function App() {
         colorId={colorId}
         customName={customName}
         error={formError}
-        onRequestSilhouette={handleSilhouetteRequest}
         onShapeChange={changeShape}
         onDesignChange={(value) => { setDesignId(value); setFormError('') }}
         onColorChange={setColorId}

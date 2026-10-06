@@ -23,6 +23,10 @@ export const validateGarlandItem = (item: Omit<GarlandItem, 'id'>) => {
   if (design.type === 'name' && (item.customization?.name?.trim().length ?? 0) > 16) {
     return 'El nombre puede tener hasta 16 caracteres.'
   }
+  if (design.type === 'other' && !item.customization?.name?.trim()) return 'Escribe la raza o tipo de perro.'
+  if (design.type === 'other' && (item.customization?.name?.trim().length ?? 0) > 40) {
+    return 'La raza puede tener hasta 40 caracteres.'
+  }
   return undefined
 }
 

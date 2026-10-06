@@ -5,6 +5,7 @@ export type DesignType =
   | "cat"
   | "bones"
   | "name"
+  | "other"
   | "day-of-dead"
   | "generic";
 
@@ -32,6 +33,12 @@ export const designs: Design[] = [
     id: "nombre",
     name: "Nombre",
     type: "name",
+    supportedShapes: ["semi-circle", "rectangle"],
+  },
+  {
+    id: "otro",
+    name: "Otro",
+    type: "other",
     supportedShapes: ["semi-circle", "rectangle"],
   },
   {

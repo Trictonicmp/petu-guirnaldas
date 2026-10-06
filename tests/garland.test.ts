@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { colors } from '../src/domain/colors/colors'
-import { buildSilhouetteRequestMessage, buildWhatsAppMessage, getWhatsAppUrl } from '../src/services/whatsapp'
-import { getDesignSilhouette } from '../src/services/assets'
+import { buildWhatsAppMessage, getWhatsAppUrl } from '../src/services/whatsapp'
+import { getBanderinSvg, getDesignSilhouette } from '../src/services/assets'
 import { migrateGarlandState } from '../src/domain/garland/migration'
-import { areGarlandSlotsComplete, getConfiguredCount } from '../src/domain/garland/rules'
+import { areGarlandSlotsComplete, getConfiguredCount, validateGarlandItem } from '../src/domain/garland/rules'
 import { buildGarlandShareUrl, parseGarland, serializeGarland } from '../src/domain/garland/share'
 
 const schnauzer = { shape: 'semi-circle' as const, designId: 'schnauzer', colorId: 'rosa' }
@@ -167,12 +167,18 @@ describe('WhatsApp message', () => {
     expect(getWhatsAppUrl('Hola', '')).toBe('https://wa.me/?text=Hola')
   })
 
-  test('builds a request for a missing dog silhouette and resolves silhouette assets by convention', () => {
+  test('lists requested silhouettes ("Otro") as separate lines in the order message', () => {
     expect(getDesignSilhouette('schnauzer')).toBe('/assets/silhouettes/silueta-schnauzer.svg')
-    const message = buildSilhouetteRequestMessage('  Dálmata  ')
-    expect(message).toContain('"Dálmata"')
-    expect(message).toContain('imagen de referencia')
-    expect(getWhatsAppUrl(message)).toContain(encodeURIComponent(message))
+    const base = { shape: 'semi-circle' as const, designId: 'otro', colorId: 'rosa' }
+    const message = buildWhatsAppMessage('A-1', [
+      { ...base, id: '1', customization: { name: 'Dálmata' } },
+      { ...base, id: '2', customization: { name: 'Labrador' } },
+    ])
+    expect(message).toContain('Otro (silueta solicitada: "Dálmata") · Semicírculo · Rosa ×1')
+    expect(message).toContain('Otro (silueta solicitada: "Labrador") · Semicírculo · Rosa ×1')
+    expect(message).toContain('imágenes de referencia')
+    expect(getBanderinSvg('rectangle', 'otro')).toBe(getBanderinSvg('rectangle', 'nombre'))
+    expect(validateGarlandItem({ shape: 'semi-circle', designId: 'otro', colorId: 'rosa' })).toBe('Escribe la raza o tipo de perro.')
   })
 
   test('groups repeated slots and encodes the order message', () => {

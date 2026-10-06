@@ -78,6 +78,9 @@ button { touch-action: manipulation; }
 .preview-art { position: absolute; inset: 0; background-color: var(--flag-color); mask-repeat: no-repeat; mask-position: center; mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
 .preview-name { position: absolute; top: 40%; left: 50%; max-width: 88%; overflow: hidden; color: #fff; font: 400 min(24cqw, calc(260cqw / var(--name-length, 8)))/1.2 'Badger Script', cursive; text-align: center; text-overflow: ellipsis; transform: translate(-50%, -50%); white-space: nowrap; }
 .preview-flag--semi-circle .preview-name { top: 25%; }
+.preview-image-icon { position: absolute; top: 40%; left: 50%; width: 34%; height: auto; aspect-ratio: 1; color: #fff; transform: translate(-50%, -50%); }
+.preview-flag--semi-circle .preview-image-icon { top: 28%; }
+.design-preview-icon { display: grid; width: 100%; max-width: 100px; height: 76px; flex: 0 0 76px; place-items: center; color: var(--coral); font-size: 36px; }
 .progress-track { height: 4px; margin-top: 14px; background: #d9d9ce; }
 .progress-track span { display: block; height: 100%; background: var(--coral); transition: width 250ms ease; }
 .progress-copy { margin: 8px 0 0; color: var(--muted); font-size: 11px; text-align: right; }
