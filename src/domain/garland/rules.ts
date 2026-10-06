@@ -1,28 +1,28 @@
 import { getDesign } from '../designs/designs'
-import { MAX_BANDERINES, type GarlandLine } from './types'
+import { MAX_BANDERINES, type GarlandItem, type GarlandSlot } from './types'
 
-export const getTotalQuantity = (items: GarlandLine[]) =>
-  items.reduce((total, item) => total + item.quantity, 0)
+export const createEmptyGarlandSlots = (): GarlandSlot[] => Array(MAX_BANDERINES).fill(null)
 
-export const isComplete = (items: GarlandLine[]) => getTotalQuantity(items) === MAX_BANDERINES
+export const getConfiguredCount = (slots: GarlandSlot[]) => slots.filter((slot) => slot !== null).length
 
-export const getLineKey = (line: Omit<GarlandLine, 'id' | 'quantity'>) =>
+export const areGarlandSlotsComplete = (slots: GarlandSlot[]) =>
+  slots.length === MAX_BANDERINES && getConfiguredCount(slots) === MAX_BANDERINES
+
+export const getGarlandItemKey = (item: Omit<GarlandItem, 'id'>) =>
   JSON.stringify([
-    line.shape,
-    line.designId,
-    line.colorId,
-    line.customization?.name?.trim().toLocaleUpperCase() ?? '',
+    item.shape,
+    item.designId,
+    item.colorId,
+    item.customization?.name?.trim().toLocaleUpperCase() ?? '',
   ])
 
-export const validateLine = (line: Omit<GarlandLine, 'id'>) => {
-  if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > MAX_BANDERINES) {
-    return 'Elige una cantidad entre 1 y 10.'
-  }
-  const design = getDesign(line.designId)
-  if (!design || !design.supportedShapes.includes(line.shape)) return 'Ese diseño no está disponible para esta forma.'
-  if (design.type === 'name' && !line.customization?.name?.trim()) return 'Ingresa un nombre.'
-  if (design.type === 'name' && (line.customization?.name?.trim().length ?? 0) > 16) {
+export const validateGarlandItem = (item: Omit<GarlandItem, 'id'>) => {
+  const design = getDesign(item.designId)
+  if (!design || !design.supportedShapes.includes(item.shape)) return 'Ese diseño no está disponible para esta forma.'
+  if (design.type === 'name' && !item.customization?.name?.trim()) return 'Ingresa un nombre.'
+  if (design.type === 'name' && (item.customization?.name?.trim().length ?? 0) > 16) {
     return 'El nombre puede tener hasta 16 caracteres.'
   }
   return undefined
 }
+

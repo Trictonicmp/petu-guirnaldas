@@ -1,16 +1,17 @@
 export type GarlandShape = 'semi-circle' | 'rectangle'
 
-export type GarlandLine = {
+export type GarlandItem = {
   id: string
   shape: GarlandShape
   designId: string
   colorId: string
-  quantity: number
   customization?: { name?: string }
 }
 
+export type GarlandSlot = GarlandItem | null
+
 export type Garland = {
-  items: GarlandLine[]
+  items: GarlandSlot[]
   orderNumber?: string
 }
 

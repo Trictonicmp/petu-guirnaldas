@@ -1,69 +1,68 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getLineKey, getTotalQuantity, validateLine } from '../domain/garland/rules'
-import { MAX_BANDERINES, type GarlandLine } from '../domain/garland/types'
+import { createEmptyGarlandSlots, validateGarlandItem } from '../domain/garland/rules'
+import { MAX_BANDERINES, type GarlandItem, type GarlandSlot } from '../domain/garland/types'
+import { migrateGarlandState } from '../domain/garland/migration'
 
 const STORAGE_KEY = 'petu-garland-config'
 
 type GarlandState = {
-  items: GarlandLine[]
+  items: GarlandSlot[]
   orderNumber: string
-  addItem: (line: Omit<GarlandLine, 'id'>) => string | undefined
-  updateItem: (id: string, changes: Partial<Omit<GarlandLine, 'id'>>) => string | undefined
-  removeItem: (id: string) => void
-  increaseQuantity: (id: string) => void
-  decreaseQuantity: (id: string) => void
-  clearGarland: () => void
+  addItem: (index: number, item: Omit<GarlandItem, 'id'>) => string | undefined
+  updateItem: (index: number, item: Omit<GarlandItem, 'id'>) => string | undefined
+  duplicateItem: (index: number) => number | undefined
+  removeItem: (index: number) => void
+  loadGarland: (items: GarlandSlot[]) => void
+  resetGarland: () => void
   setOrderNumber: (value: string) => void
 }
 
 export const useGarlandStore = create<GarlandState>()(persist((set, get) => ({
-  items: [],
+  items: createEmptyGarlandSlots(),
   orderNumber: '',
-  addItem: (line) => {
-    const error = validateLine(line)
+  addItem: (index, item) => {
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_BANDERINES) return 'Selecciona una posición válida.'
+    if (get().items[index] !== null) return 'Esa posición ya tiene un banderín.'
+    const error = validateGarlandItem(item)
     if (error) return error
-    const items = get().items
-    const key = getLineKey(line)
-    const existing = items.find((item) => getLineKey(item) === key)
-    const remaining = MAX_BANDERINES - getTotalQuantity(items)
-    if (line.quantity > remaining) return `Solo puedes agregar ${remaining} banderines más.`
-    if (existing) {
-      set({ items: items.map((item) => item.id === existing.id ? { ...item, quantity: item.quantity + line.quantity } : item) })
-    } else {
-      set({ items: [...items, { ...line, id: crypto.randomUUID() }] })
-    }
+    set((state) => ({ items: state.items.map((slot, slotIndex) => slotIndex === index ? { ...item, id: crypto.randomUUID() } : slot) }))
     return undefined
   },
-  updateItem: (id, changes) => {
-    const state = get()
-    const current = state.items.find((item) => item.id === id)
-    if (!current) return 'No se encontró esa línea.'
-    const updated = { ...current, ...changes }
-    const validationError = validateLine(updated)
+  updateItem: (index, item) => {
+    const current = get().items[index]
+    if (!current) return 'No se encontró ese banderín.'
+    const validationError = validateGarlandItem(item)
     if (validationError) return validationError
-    const others = state.items.filter((item) => item.id !== id)
-    if (getTotalQuantity(others) + updated.quantity > MAX_BANDERINES) return `Solo puedes agregar ${MAX_BANDERINES - getTotalQuantity(others)} banderines a esta línea.`
-    const duplicate = others.find((item) => getLineKey(item) === getLineKey(updated))
-    set({ items: duplicate
-      ? others.map((item) => item.id === duplicate.id ? { ...item, quantity: item.quantity + updated.quantity } : item)
-      : state.items.map((item) => item.id === id ? updated : item) })
+    const updated: GarlandItem = { ...item, id: current.id }
+    set((state) => ({ items: state.items.map((slot, slotIndex) => slotIndex === index ? updated : slot) }))
     return undefined
   },
-  removeItem: (id) => set((state) => ({ items: state.items.filter((item) => item.id !== id) })),
-  increaseQuantity: (id) => set((state) => {
-    if (getTotalQuantity(state.items) >= MAX_BANDERINES) return state
-    return { items: state.items.map((item) => item.id === id ? { ...item, quantity: item.quantity + 1 } : item) }
-  }),
-  decreaseQuantity: (id) => set((state) => ({
-    items: state.items.flatMap((item) => item.id !== id ? [item] : item.quantity <= 1 ? [] : [{ ...item, quantity: item.quantity - 1 }]),
-  })),
-  clearGarland: () => {
-    set({ items: [], orderNumber: '' })
+  duplicateItem: (index) => {
+    const state = get()
+    const source = state.items[index]
+    const targetIndex = state.items.findIndex((slot) => slot === null)
+    if (!source || targetIndex < 0) return undefined
+    const duplicate: GarlandItem = {
+      ...source,
+      id: crypto.randomUUID(),
+      ...(source.customization ? { customization: { ...source.customization } } : {}),
+    }
+    set((current) => ({
+      items: current.items.map((slot, slotIndex) => slotIndex === targetIndex ? duplicate : slot),
+    }))
+    return targetIndex
+  },
+  removeItem: (index) => set((state) => ({ items: state.items.map((item, slotIndex) => slotIndex === index ? null : item) })),
+  loadGarland: (items) => set({ items }),
+  resetGarland: () => {
+    set({ items: createEmptyGarlandSlots(), orderNumber: '' })
     if (typeof localStorage !== 'undefined') localStorage.removeItem(STORAGE_KEY)
   },
   setOrderNumber: (orderNumber) => set({ orderNumber }),
 }), {
   name: STORAGE_KEY,
+  version: 2,
+  migrate: (persistedState) => migrateGarlandState(persistedState),
   partialize: ({ items, orderNumber }) => ({ items, orderNumber }),
 }))
