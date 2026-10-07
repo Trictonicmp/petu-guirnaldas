@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   Dialog,
@@ -18,8 +18,10 @@ import {
 } from "@fluentui/react-icons";
 import { colors } from "../../domain/colors/colors";
 import { designs } from "../../domain/designs/designs";
+import { otherDesignHint } from "../../domain/help/helpTopics";
 import type { GarlandItem, GarlandShape } from "../../domain/garland/types";
 import { getDesignPreview } from "../../services/assets";
+import { useOnboarding, useOnboardingTarget } from "../onboarding/OnboardingProvider";
 
 function DesignPreview({
   designId,
@@ -96,6 +98,12 @@ export default function BanderinConfigurator({
 }: BanderinConfiguratorProps) {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
+  const contentRef = useRef<HTMLDivElement>(null);
+  const onboarding = useOnboarding();
+  const shapeTargetRef = useOnboardingTarget("shape");
+  const designTargetRef = useOnboardingTarget("design");
+  const colorTargetRef = useOnboardingTarget("color");
+  const saveTargetRef = useOnboardingTarget("save");
   const availableDesigns = designs.filter((design) =>
     design.supportedShapes.includes(shape),
   );
@@ -110,9 +118,16 @@ export default function BanderinConfigurator({
     }
   }, [open, position]);
 
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [step]);
+
   const moveToStep = (nextStep: number) => {
     setDirection(nextStep > step ? "forward" : "backward");
     setStep(nextStep);
+    if (!editing && ["shape", "design", "color"].includes(onboarding.step ?? "")) {
+      onboarding.setStep((["shape", "design", "color"] as const)[nextStep]);
+    }
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -146,7 +161,7 @@ export default function BanderinConfigurator({
                 ? `Edita el banderín ${position}`
                 : `Agrega el banderín ${position}`}
             </DialogTitle>
-            <DialogContent>
+            <DialogContent ref={contentRef}>
               <div
                 className="configurator-step-indicator"
                 aria-label={`Paso ${step + 1} de 3`}
@@ -179,6 +194,7 @@ export default function BanderinConfigurator({
                     </div>
                     <div
                       className="shape-options"
+                      ref={shapeTargetRef}
                       role="group"
                       aria-label="Forma del banderín"
                     >
@@ -212,7 +228,8 @@ export default function BanderinConfigurator({
                       <span className="step-index">02</span>
                       <h2>Escoge un diseño</h2>
                     </div>
-                    <div className="design-grid">
+                    <p className="design-step-hint" role="note">{otherDesignHint}</p>
+                    <div className="design-grid" ref={designTargetRef}>
                       {availableDesigns.map((design) => (
                         <ToggleButton
                           key={design.id}
@@ -276,6 +293,7 @@ export default function BanderinConfigurator({
                     <span className="field-label">Color del papel</span>
                     <div
                       className="color-options"
+                      ref={colorTargetRef}
                       role="radiogroup"
                       aria-label="Color del papel"
                     >
@@ -289,7 +307,12 @@ export default function BanderinConfigurator({
                               "--swatch-color": color.value,
                             } as React.CSSProperties
                           }
-                          onClick={() => onColorChange(color.id)}
+                          onClick={() => {
+                            onColorChange(color.id);
+                            if (!editing && onboarding.step === "color") {
+                              onboarding.setStep("save");
+                            }
+                          }}
                           aria-label={color.name}
                           aria-pressed={colorId === color.id}
                           title={color.name}
@@ -335,6 +358,7 @@ export default function BanderinConfigurator({
                 appearance="primary"
                 icon={step < 2 ? <ArrowRightRegular /> : undefined}
                 type="submit"
+                ref={step === 2 ? saveTargetRef : undefined}
               >
                 {step < 2
                   ? "Continuar"

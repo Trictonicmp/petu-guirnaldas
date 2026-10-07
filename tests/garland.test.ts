@@ -18,8 +18,12 @@ Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     get length() { return storageData.size },
 } as Storage })
 const { useGarlandStore } = await import('../src/store/garlandStore')
+const { useOnboardingStore } = await import('../src/store/onboardingStore')
 
-afterEach(() => useGarlandStore.getState().resetGarland())
+afterEach(() => {
+  useGarlandStore.getState().resetGarland()
+  useOnboardingStore.getState().setHasCompleted(false)
+})
 
 describe('garland configuration', () => {
   test('offers the current six paper colors', () => {
@@ -126,6 +130,20 @@ describe('garland configuration', () => {
     for (let index = 0; index < 10; index += 1) store.addItem(index, schnauzer)
     expect(useGarlandStore.getState().duplicateItem(0)).toBeUndefined()
     expect(getConfiguredCount(useGarlandStore.getState().items)).toBe(10)
+  })
+})
+
+describe('onboarding state', () => {
+  test('persists completion independently from the garland configuration', () => {
+    useOnboardingStore.getState().setHasCompleted(true)
+
+    const stored = JSON.parse(storageData.get('petu-onboarding') ?? '{}') as {
+      state?: { hasCompleted?: boolean }
+    }
+    expect(stored.state?.hasCompleted).toBe(true)
+
+    useGarlandStore.getState().resetGarland()
+    expect(useOnboardingStore.getState().hasCompleted).toBe(true)
   })
 })
 
