@@ -211,3 +211,7 @@ button { touch-action: manipulation; }
 }
 
 .fui-FluentProvider { --fontFamilyBase: var(--font-app); }
+/* Bloquea el scroll de la página mientras hay un modal abierto */
+html { scrollbar-gutter: stable; }
+html:has(.fui-DialogSurface), html:has(.fui-DialogSurface) body { overflow: hidden; }
+.fui-DialogSurface, .fui-DialogContent { overscroll-behavior: contain; }
