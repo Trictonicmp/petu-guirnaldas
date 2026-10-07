@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { AddRegular, CopyRegular } from '@fluentui/react-icons'
 import { ChevronLeftRegular, ChevronRightRegular } from '@fluentui/react-icons'
 import { colors } from '../../domain/colors/colors'
 import { getDesign } from '../../domain/designs/designs'
 import { MAX_BANDERINES } from '../../domain/garland/types'
 import type { GarlandSlot } from '../../domain/garland/types'
+import { useOnboarding, useOnboardingTarget } from '../onboarding/OnboardingProvider'
 import BanderinRenderer from '../banderin/BanderinRenderer'
 
 type GarlandCarouselProps = {
@@ -17,6 +18,16 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
   const viewportRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [duplicateNotice, setDuplicateNotice] = useState('')
+  const onboarding = useOnboarding()
+  const addTargetRef = useOnboardingTarget('add')
+  const carouselTargetRef = useOnboardingTarget('carousel')
+  const duplicateTargetRef = useOnboardingTarget('duplicate')
+  const firstEmptyIndex = items.findIndex((item) => item === null)
+  const firstConfiguredIndex = items.findIndex((item) => item !== null)
+  const setViewportRef = useCallback((element: HTMLDivElement | null) => {
+    viewportRef.current = element
+    carouselTargetRef(element)
+  }, [carouselTargetRef])
 
   const goToPosition = (index: number) => {
     const viewport = viewportRef.current
@@ -25,6 +36,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
     const targetLeft = viewport.scrollLeft + card.getBoundingClientRect().left - viewport.getBoundingClientRect().left
     viewport.scrollTo({ left: targetLeft, behavior: 'instant' })
     setActiveIndex(index)
+    if (index > 0 && onboarding.step === 'carousel') onboarding.setStep('progress')
   }
 
   const handleScroll = () => {
@@ -42,6 +54,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
       }
     })
     setActiveIndex(closestIndex)
+    if (closestIndex > 0 && onboarding.step === 'carousel') onboarding.setStep('progress')
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
@@ -68,7 +81,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
     <div className="garland-carousel-shell">
       <div
         className="garland-carousel"
-        ref={viewportRef}
+        ref={setViewportRef}
         role="region"
         aria-roledescription="carrusel"
         aria-label="Posiciones de la guirnalda"
@@ -91,6 +104,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
                 onClick={() => onSelectPosition(index)}
                 onFocus={() => setActiveIndex(index)}
                 onKeyDown={handleKeyDown}
+                ref={index === firstEmptyIndex ? addTargetRef : undefined}
                 aria-label={item
                   ? `Editar posición ${index + 1}: ${design?.name ?? item.designId}${item.customization?.name ? ` ${item.customization.name}` : ''}`
                   : `Agregar banderín a la posición ${index + 1}`}
@@ -108,6 +122,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
                 <button
                   type="button"
                   className="garland-slot-duplicate"
+                  ref={index === firstConfiguredIndex ? duplicateTargetRef : undefined}
                   aria-label={`Duplicar banderín de la posición ${index + 1}`}
                   title="Duplicar banderín"
                   disabled={!items.some((slot) => slot === null)}
@@ -119,6 +134,7 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
                     }
                     setDuplicateNotice(`Banderín duplicado en la posición ${duplicatedIndex + 1}.`)
                     goToPosition(duplicatedIndex)
+                    if (onboarding.step === 'duplicate') onboarding.setStep('carousel')
                   }}
                 >
                   <CopyRegular />

@@ -14,7 +14,7 @@ import {
   PopoverSurface,
   PopoverTrigger,
 } from '@fluentui/react-components'
-import { InfoRegular } from '@fluentui/react-icons'
+import { InfoRegular, QuestionCircleRegular } from '@fluentui/react-icons'
 import { designs } from '../domain/designs/designs'
 import { areGarlandSlotsComplete, getConfiguredCount } from '../domain/garland/rules'
 import { buildGarlandShareUrl, serializeGarland } from '../domain/garland/share'
@@ -24,6 +24,8 @@ import { buildWhatsAppMessage, getWhatsAppUrl } from '../services/whatsapp'
 import GarlandCarousel from '../components/garland/GarlandCarousel'
 import GarlandOverview from '../components/garland/GarlandOverview'
 import BanderinConfigurator from '../components/configurator/BanderinConfigurator'
+import HelpDialog from '../components/help/HelpDialog'
+import { useOnboarding, useOnboardingTarget } from '../components/onboarding/OnboardingProvider'
 
 export default function App() {
   const { g } = useSearch({ from: '/' })
@@ -36,6 +38,7 @@ export default function App() {
   const removeItem = useGarlandStore((state) => state.removeItem)
   const resetGarland = useGarlandStore((state) => state.resetGarland)
   const setOrderNumber = useGarlandStore((state) => state.setOrderNumber)
+  const onboarding = useOnboarding()
 
   const [shape, setShape] = useState<GarlandShape>('semi-circle')
   const [designId, setDesignId] = useState('schnauzer')
@@ -45,7 +48,14 @@ export default function App() {
   const [configuratorOpen, setConfiguratorOpen] = useState(false)
   const [orderDialogOpen, setOrderDialogOpen] = useState(false)
   const [orderError, setOrderError] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | undefined>()
+
+  const introTargetRef = useOnboardingTarget('intro')
+  const progressTargetRef = useOnboardingTarget('progress')
+  const completionTargetRef = useOnboardingTarget('completion')
+  const orderTargetRef = useOnboardingTarget('order')
+  const whatsappTargetRef = useOnboardingTarget('whatsapp')
 
   const total = getConfiguredCount(items)
   const remaining = MAX_BANDERINES - total
@@ -58,6 +68,12 @@ export default function App() {
     if (next !== g) void navigate({ to: '/', search: { g: next }, replace: true })
   }, [items, g, navigate])
 
+  useEffect(() => {
+    if (complete && ['duplicate', 'carousel', 'progress', 'save'].includes(onboarding.step ?? '')) {
+      onboarding.setStep('completion')
+    }
+  }, [complete, onboarding.step, onboarding.setStep])
+
   const changeShape = (nextShape: GarlandShape) => {
     setShape(nextShape)
     const nextDesign = designs.find((design) => design.supportedShapes.includes(nextShape))
@@ -68,6 +84,7 @@ export default function App() {
 
   const openPosition = (index: number) => {
     const item = items[index]
+    if (!item && onboarding.step === 'add') onboarding.setStep('shape')
     setEditingIndex(index)
     setShape(item?.shape ?? 'semi-circle')
     setDesignId(item?.designId ?? 'schnauzer')
@@ -78,6 +95,9 @@ export default function App() {
   }
 
   const closeConfigurator = () => {
+    if (['shape', 'design', 'color', 'save'].includes(onboarding.step ?? '')) {
+      onboarding.setStep('add')
+    }
     setConfiguratorOpen(false)
     setEditingIndex(undefined)
     setFormError('')
@@ -85,11 +105,15 @@ export default function App() {
 
   const handleSaveItem = (item: Omit<GarlandItem, 'id'>) => {
     if (editingIndex === undefined) return
+    const adding = !editing
     const error = editing
       ? updateItem(editingIndex, item)
       : addItem(editingIndex, item)
     setFormError(error ?? '')
     if (!error) {
+      if (adding && ['shape', 'design', 'color', 'save'].includes(onboarding.step ?? '')) {
+        onboarding.setStep('duplicate')
+      }
       setCustomName('')
       setConfiguratorOpen(false)
       setEditingIndex(undefined)
@@ -109,6 +133,7 @@ export default function App() {
     }
     const message = buildWhatsAppMessage(orderNumber, items, shareUrl)
     window.open(getWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
+    onboarding.complete()
     resetGarland()
     setOrderDialogOpen(false)
     setOrderError('')
@@ -120,6 +145,17 @@ export default function App() {
       <header className="topbar">
         <a className="wordmark" href="#inicio" aria-label="Petu, inicio">petu<span>✳</span></a>
         <span className="topbar-note">PAPEL PICADO HECHO CON CARIÑO</span>
+        <Button
+          appearance="subtle"
+          icon={<QuestionCircleRegular />}
+          aria-label="Abrir ayuda"
+          title="Ayuda"
+          onClick={() => {
+            if (onboarding.step === 'intro') onboarding.setStep('add')
+            else if (onboarding.step) onboarding.dismiss()
+            setHelpOpen(true)
+          }}
+        />
       </header>
 
       <section className="intro" id="inicio">
@@ -130,18 +166,33 @@ export default function App() {
         <p className="intro-copy">Elige tus banderines favoritos y arma una guirnalda que hable de ustedes.</p>
       </section>
 
-      <section className="garland-builder" aria-label="Guirnalda de 10 banderines">
+      <section className="garland-builder" aria-label="Guirnalda de 10 banderines" ref={introTargetRef}>
         <div className="preview-heading">
           <div><p className="eyebrow">ASÍ VA QUEDANDO</p><h2>Tu guirnalda</h2></div>
-          <Badge appearance={complete ? 'filled' : 'outline'} color={complete ? 'success' : 'informative'}>{total} / {MAX_BANDERINES}</Badge>
+          <Badge ref={progressTargetRef} appearance={complete ? 'filled' : 'outline'} color={complete ? 'success' : 'informative'}>{total} / {MAX_BANDERINES}</Badge>
         </div>
         <GarlandOverview items={items} />
+        <p className="carousel-swipe-hint">
+          Desliza las tarjetas hacia la izquierda o la derecha para recorrer tus 10 banderines.
+        </p>
         <GarlandCarousel items={items} onSelectPosition={openPosition} onDuplicatePosition={duplicateItem} />
         <div className="garland-progress">
           <div className="progress-track" aria-label={`${total} de ${MAX_BANDERINES} posiciones configuradas`}><span style={{ width: `${total * 10}%` }} /></div>
           <p className="progress-copy">{complete ? '¡Tu guirnalda está completa!' : `Completa los ${remaining} banderines restantes para continuar.`}</p>
         </div>
-        <Button appearance="primary" size="large" className="continue-button" onClick={() => setOrderDialogOpen(true)} disabled={!complete}>Continuar <span aria-hidden="true">↗</span></Button>
+        <Button
+          appearance="primary"
+          size="large"
+          className="continue-button"
+          ref={completionTargetRef}
+          onClick={() => {
+            if (onboarding.step === 'completion') onboarding.setStep('order')
+            setOrderDialogOpen(true)
+          }}
+          disabled={!complete}
+        >
+          Continuar <span aria-hidden="true">↗</span>
+        </Button>
       </section>
 
       <footer className="footer-note">HECHO A MANO, HECHO PARA CELEBRAR <span>✳</span></footer>
@@ -170,16 +221,30 @@ export default function App() {
             <DialogBody>
               <DialogTitle>Número de pedido</DialogTitle>
               <DialogContent>
-                <div className="order-label-row">
-                  <label htmlFor="order-number">Escribe el número asociado a tu compra.</label>
-                  <Popover positioning={{ position: 'above', align: 'end' }}>
-                    <PopoverTrigger disableButtonEnhancement>
-                      <Button appearance="subtle" icon={<InfoRegular />} aria-label="¿Dónde encuentro mi número de pedido?" />
-                    </PopoverTrigger>
-                    <PopoverSurface className="order-info">Tu número de pedido fue enviado al correo electrónico que utilizaste para realizar tu compra en LolaPay. Si no lo encuentras, revisa también tu carpeta de spam o correo no deseado.</PopoverSurface>
-                  </Popover>
+                <div className="order-field" ref={orderTargetRef}>
+                  <div className="order-label-row">
+                    <label htmlFor="order-number">Escribe el número asociado a tu compra.</label>
+                    <Popover positioning={{ position: 'above', align: 'end' }}>
+                      <PopoverTrigger disableButtonEnhancement>
+                        <Button appearance="subtle" icon={<InfoRegular />} aria-label="¿Dónde encuentro mi número de pedido?" />
+                      </PopoverTrigger>
+                      <PopoverSurface className="order-info">Tu número de pedido fue enviado al correo electrónico que utilizaste para realizar tu compra en LolaPay. Si no lo encuentras, revisa también tu carpeta de spam o correo no deseado.</PopoverSurface>
+                    </Popover>
+                  </div>
+                  <Input
+                    id="order-number"
+                    autoFocus
+                    value={orderNumber}
+                    placeholder="Número de pedido"
+                    onChange={(_, data) => {
+                      setOrderNumber(data.value)
+                      setOrderError('')
+                      if (['order', 'whatsapp'].includes(onboarding.step ?? '')) {
+                        onboarding.setStep(data.value.trim() ? 'whatsapp' : 'order')
+                      }
+                    }}
+                  />
                 </div>
-                <Input id="order-number" autoFocus value={orderNumber} placeholder="Número de pedido" onChange={(_, data) => { setOrderNumber(data.value); setOrderError('') }} />
                 {orderError && <p className="form-error" role="alert">{orderError}</p>}
                 <section className="order-summary">
                   <h3>Resumen de tu guirnalda</h3>
@@ -188,12 +253,20 @@ export default function App() {
               </DialogContent>
               <DialogActions>
                 <Button appearance="secondary" onClick={() => setOrderDialogOpen(false)}>Cancelar</Button>
-                <Button appearance="primary" type="submit">Abrir WhatsApp</Button>
+                <Button appearance="primary" type="submit" ref={whatsappTargetRef}>Abrir WhatsApp</Button>
               </DialogActions>
             </DialogBody>
           </form>
         </DialogSurface>
       </Dialog>
+      <HelpDialog
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        onReplayTutorial={() => {
+          setHelpOpen(false)
+          onboarding.restart()
+        }}
+      />
     </main>
   )
 }

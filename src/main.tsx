@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { FluentProvider, webLightTheme } from '@fluentui/react-components'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './app/router'
+import { OnboardingProvider } from './components/onboarding/OnboardingProvider'
 import { parseGarland } from './domain/garland/share'
 import { useGarlandStore } from './store/garlandStore'
 import './styles.css'
@@ -14,7 +15,9 @@ if (sharedGarland) useGarlandStore.getState().loadGarland(sharedGarland)
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <FluentProvider theme={webLightTheme}>
-      <RouterProvider router={router} />
+      <OnboardingProvider>
+        <RouterProvider router={router} />
+      </OnboardingProvider>
     </FluentProvider>
   </React.StrictMode>,
 )
