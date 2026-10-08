@@ -3,9 +3,11 @@ import type { DesignType } from '../domain/designs/designs'
 
 export function getBanderinSvg(shape: GarlandShape, designId: string): string {
   const prefix = shape === 'semi-circle' ? 'semi-circulo' : 'tradicional'
-  const artId = designId === 'otro' ? 'nombre' : designId
+  const artId = designId === 'otro' ? 'formabase' : designId
   return `/assets/${prefix}-${artId}.svg`
 }
+
+export const otherVariantSvg = '/assets/variants/variante-otro.svg'
 
 export function getDesignSilhouette(designId: string): string {
   return `/assets/silhouettes/silueta-${designId}.svg`
@@ -13,7 +15,7 @@ export function getDesignSilhouette(designId: string): string {
 
 export function getDesignPreview(designId: string, type: DesignType): string | undefined {
   if (type === 'dog' || type === 'cat') return getDesignSilhouette(designId)
-  if (type === 'bones' || type === 'generic' || type === 'day-of-dead') {
+  if (type === 'other' || type === 'bones' || type === 'generic' || type === 'day-of-dead') {
     return `/assets/variants/variante-${designId}.svg`
   }
   return undefined

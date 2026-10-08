@@ -14,7 +14,6 @@ import {
   ArrowLeftRegular,
   ArrowRightRegular,
   DeleteRegular,
-  ImageRegular,
 } from "@fluentui/react-icons";
 import { colors } from "../../domain/colors/colors";
 import { designs } from "../../domain/designs/designs";
@@ -34,14 +33,6 @@ function DesignPreview({
 }) {
   const [unavailable, setUnavailable] = useState(false);
   const src = getDesignPreview(designId, type);
-
-  if (type === "other") {
-    return (
-      <span className="design-preview-icon" aria-hidden="true">
-        <ImageRegular />
-      </span>
-    );
-  }
 
   if (!src || unavailable) {
     return (

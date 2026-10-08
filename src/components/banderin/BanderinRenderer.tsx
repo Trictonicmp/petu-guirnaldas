@@ -1,7 +1,6 @@
-import { ImageRegular } from '@fluentui/react-icons'
 import type { GarlandItem } from '../../domain/garland/types'
 import { getDesign } from '../../domain/designs/designs'
-import { getBanderinSvg } from '../../services/assets'
+import { getBanderinSvg, otherVariantSvg } from '../../services/assets'
 
 type BanderinRendererProps = {
   item: GarlandItem
@@ -34,7 +33,19 @@ export default function BanderinRenderer({ item, color, index, className = '' }:
           WebkitMaskSize: 'contain',
         } as React.CSSProperties}
       />
-      {item.designId === 'otro' && <ImageRegular className="preview-image-icon" aria-hidden="true" />}
+      {item.designId === 'otro' && (
+        <span
+          className="preview-other"
+          style={{ '--name-length': Math.max(item.customization?.name?.length ?? 0, 8) } as React.CSSProperties}
+        >
+          <span
+            className="preview-other-art"
+            aria-hidden="true"
+            style={{ maskImage: `url("${otherVariantSvg}")`, WebkitMaskImage: `url("${otherVariantSvg}")` }}
+          />
+          {item.customization?.name && <span className="preview-other-name">{item.customization.name}</span>}
+        </span>
+      )}
       {item.designId !== 'otro' && item.customization?.name && (
         <span className="preview-name" style={{ '--name-length': item.customization.name.length } as React.CSSProperties}>
           {item.customization.name}
