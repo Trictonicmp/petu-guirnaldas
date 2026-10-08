@@ -63,6 +63,7 @@ export default function App() {
   const [orderError, setOrderError] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | undefined>();
+  const [scrollRequest, setScrollRequest] = useState<{ index: number; id: number } | null>(null);
 
   const introTargetRef = useOnboardingTarget("intro");
   const progressTargetRef = useOnboardingTarget("progress");
@@ -254,12 +255,18 @@ export default function App() {
             {total} / {MAX_BANDERINES}
           </Badge>
         </div>
-        <GarlandOverview items={items} />
+        <GarlandOverview
+          items={items}
+          onSelectPosition={(index) =>
+            setScrollRequest((current) => ({ index, id: (current?.id ?? 0) + 1 }))
+          }
+        />
         <p className="carousel-swipe-hint">
           Desliza las tarjetas hacia la izquierda o la derecha para recorrer tus
           10 banderines.
         </p>
         <GarlandCarousel
+          scrollRequest={scrollRequest}
           items={items}
           onSelectPosition={openPosition}
           onDuplicatePosition={duplicateItem}

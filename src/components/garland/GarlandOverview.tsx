@@ -4,9 +4,10 @@ import BanderinRenderer from '../banderin/BanderinRenderer'
 
 type GarlandOverviewProps = {
   items: GarlandSlot[]
+  onSelectPosition: (index: number) => void
 }
 
-export default function GarlandOverview({ items }: GarlandOverviewProps) {
+export default function GarlandOverview({ items, onSelectPosition }: GarlandOverviewProps) {
   const configuredCount = items.filter(Boolean).length
 
   return (
@@ -22,13 +23,19 @@ export default function GarlandOverview({ items }: GarlandOverviewProps) {
             const color = item ? colors.find((candidate) => candidate.id === item.colorId) : undefined
 
             return (
-              <div className="garland-overview-position" key={index}>
+              <button
+                type="button"
+                className="garland-overview-position"
+                key={index}
+                onClick={() => onSelectPosition(index)}
+                aria-label={`Ir a la posición ${index + 1}`}
+              >
                 <span className="garland-overview-knot" aria-hidden="true" />
                 {item && color
                   ? <BanderinRenderer item={item} color={color.value} index={index} className="garland-overview-flag" />
                   : <span className="garland-overview-empty" aria-hidden="true">+</span>}
                 <span className="garland-overview-index">{String(index + 1).padStart(2, '0')}</span>
-              </div>
+              </button>
             )
           })}
         </div>

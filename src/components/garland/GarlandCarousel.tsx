@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AddRegular, CopyRegular } from '@fluentui/react-icons'
 import { ChevronLeftRegular, ChevronRightRegular } from '@fluentui/react-icons'
 import { colors } from '../../domain/colors/colors'
@@ -12,9 +12,10 @@ type GarlandCarouselProps = {
   items: GarlandSlot[]
   onSelectPosition: (index: number) => void
   onDuplicatePosition: (index: number) => number | undefined
+  scrollRequest?: { index: number; id: number } | null
 }
 
-export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePosition }: GarlandCarouselProps) {
+export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePosition, scrollRequest }: GarlandCarouselProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [duplicateNotice, setDuplicateNotice] = useState('')
@@ -34,10 +35,16 @@ export default function GarlandCarousel({ items, onSelectPosition, onDuplicatePo
     const card = viewport?.querySelectorAll<HTMLButtonElement>('.garland-slot-card')[index]
     if (!viewport || !card) return
     const targetLeft = viewport.scrollLeft + card.getBoundingClientRect().left - viewport.getBoundingClientRect().left
-    viewport.scrollTo({ left: targetLeft, behavior: 'instant' })
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    viewport.scrollTo({ left: targetLeft, behavior: reduceMotion ? 'instant' : 'smooth' })
     setActiveIndex(index)
     if (index > 0 && onboarding.step === 'carousel') onboarding.setStep('progress')
   }
+
+  useEffect(() => {
+    if (scrollRequest) goToPosition(scrollRequest.index)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollRequest])
 
   const handleScroll = () => {
     const viewport = viewportRef.current
