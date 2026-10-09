@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'Badger Script';
-  src: url('/assets/fonts/badger-script.ttf') format('truetype');
+  font-family: 'Guirnaldas Font';
+  src: url('/assets/fonts/Guirnaldas-font.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -80,7 +80,7 @@ button { touch-action: manipulation; }
 .preview-flag { position: relative; display: grid; place-items: center; width: clamp(42px, 5.5vw, 62px); aspect-ratio: 0.89; container-type: inline-size; animation: appear 240ms ease both; }
 .preview-flag--rectangle { aspect-ratio: 1.27; }
 .preview-art { position: absolute; inset: 0; background-color: var(--flag-color); mask-repeat: no-repeat; mask-position: center; mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
-.preview-name { position: absolute; top: 40%; left: 50%; max-width: 88%; overflow: hidden; color: #fff; font: 400 min(24cqw, calc(260cqw / var(--name-length, 8)))/1.2 'Badger Script', cursive; text-align: center; text-overflow: ellipsis; transform: translate(-50%, -50%); white-space: nowrap; }
+.preview-name { position: absolute; top: 40%; left: 50%; max-width: 88%; overflow: hidden; color: #fff; font: 400 min(24cqw, calc(260cqw / var(--name-length, 8)))/1.2 'Guirnaldas Font', cursive; text-align: center; text-overflow: ellipsis; transform: translate(-50%, -50%); white-space: nowrap; }
 .preview-flag--semi-circle .preview-name { top: 25%; }
 .preview-other { position: absolute; inset: 14% 14% 18%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5cqw; overflow: hidden; color: #fff; }
 .preview-flag--rectangle .preview-other { inset: 14% 12%; }

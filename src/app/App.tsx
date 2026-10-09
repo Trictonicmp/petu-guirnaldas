@@ -30,6 +30,7 @@ import {
   type GarlandShape,
 } from "../domain/garland/types";
 import { useGarlandStore } from "../store/garlandStore";
+import { downloadGarlandZip } from "../services/exportZip";
 import { buildWhatsAppMessage, getWhatsAppUrl } from "../services/whatsapp";
 import GarlandCarousel from "../components/garland/GarlandCarousel";
 import GarlandOverview from "../components/garland/GarlandOverview";
@@ -41,7 +42,7 @@ import {
 } from "../components/onboarding/OnboardingProvider";
 
 export default function App() {
-  const { g } = useSearch({ from: "/" });
+  const { g, p } = useSearch({ from: "/" });
   const navigate = useNavigate();
   const items = useGarlandStore((state) => state.items);
   const orderNumber = useGarlandStore((state) => state.orderNumber);
@@ -75,18 +76,30 @@ export default function App() {
   const remaining = MAX_BANDERINES - total;
   const complete = areGarlandSlotsComplete(items);
   const editing = editingIndex !== undefined && Boolean(items[editingIndex]);
-  const shareUrl = buildGarlandShareUrl(window.location.origin, items);
+  const shareUrl = buildGarlandShareUrl(window.location.origin, items, orderNumber);
 
   useEffect(() => {
     const next = serializeGarland(items);
     if (next !== g)
       void navigate({
         to: "/",
-        search: { g: next },
+        search: { g: next, p },
         replace: true,
         resetScroll: false,
       });
-  }, [items, g, navigate]);
+  }, [items, g, p, navigate]);
+
+  useEffect(() => {
+    // Solo los enlaces que traen número de pedido (?p=) permiten descargar el ZIP.
+    if (!p) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || !event.shiftKey || event.key.toLowerCase() !== "s") return;
+      event.preventDefault();
+      downloadGarlandZip(useGarlandStore.getState().items, p).catch(() => undefined);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [p]);
 
   useEffect(() => {
     if (

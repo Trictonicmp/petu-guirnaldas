@@ -44,7 +44,9 @@ export function parseGarland(value: unknown): GarlandSlot[] | undefined {
   return slots.some(Boolean) ? slots : undefined
 }
 
-export function buildGarlandShareUrl(origin: string, slots: GarlandSlot[]): string {
+export function buildGarlandShareUrl(origin: string, slots: GarlandSlot[], orderNumber?: string): string {
   const garland = serializeGarland(slots)
-  return garland ? `${origin}/?g=${encodeURIComponent(garland)}` : `${origin}/`
+  if (!garland) return `${origin}/`
+  const order = orderNumber?.trim().replace(/^#/, '')
+  return `${origin}/?g=${encodeURIComponent(garland)}${order ? `&p=${encodeURIComponent(order)}` : ''}`
 }
